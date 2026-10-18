@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#635bdb">
+<title>CapRévisions</title>
+<style>
+:root {
+  --primary: #635bdb;
+  --bg: #f5f6fc;
+  --text: #20213a;
+  --muted: #777b94;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header {
+  background: var(--primary);
+  color: white;
+  padding: 24px 20px;
+}
+.header-inner, main {
+  max-width: 1000px;
+  margin: auto;
+}
+header h1 { margin: 0 0 8px; font-size: 28px; }
+header p { margin: 0; opacity: .9; }
+main { padding: 22px 16px 40px; }
+h2 { font-size: 19px; margin-top: 0; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 3px 14px #2525540a;
+  margin-bottom: 16px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.stat {
+  background: white;
+  border-radius: 14px;
+  padding: 15px 10px;
+  text-align: center;
+}
+.stat strong { display: block; font-size: 25px; color: var(--primary); }
+.stat span { color: var(--muted); font-size: 12px; }
+input, select, button {
+  font: inherit;
+  border-radius: 9px;
+  padding: 11px;
+}
+input, select {
+  border: 1px solid #dedfee;
+  background: white;
+  color: var(--text);
+  min-width: 0;
+  width: 100%;
+}
+button {
+  border: 0;
+  cursor: pointer;
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+button:hover { opacity: .88; }
+.form {
+  display: grid;
+  gap: 10px;
+}
+.task {
+  border: 1px solid #ececf5;
+  border-radius: 12px;
+  padding: 13px;
+  margin-top: 10px;
+}
+.task-top {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.task-top input { width: auto; margin-top: 4px; }
+.task-name { flex: 1; overflow-wrap: anywhere; }
+.task.done .task-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.task-meta { font-size: 12px; color: var(--muted); margin-top: 7px; }
+.priority { font-size: 12px; margin-top: 8px; }
+.delete {
+  background: #fceaea;
+  color: #b82d39;
+  padding: 7px 10px;
+}
+.progress-bg {
+  background: #e9e8f7;
+  height: 10px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+.progress-bar {
+  background: var(--primary);
+  height: 100%;
+  width: 0%;
+  transition: width .2s;
+}
+.timer { text-align: center; }
+.clock {
+  font-size: clamp(42px, 9vw, 64px);
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin: 15px 0;
+}
+.timer-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.secondary { background: #eeedff; color: var(--primary); }
+.muted { color: var(--muted); font-size: 13px; }
+.empty { text-align: center; color: var(--muted); padding: 20px 0; }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 12px; }
+@media (max-width: 650px) {
+  .grid { grid-template-columns: 1fr; }
+  main { padding: 16px 12px 30px; }
+  .card { padding: 16px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>📚 CapRévisions</h1>
+    <p>Organise tes révisions, avance à ton rythme.</p>
+  </div>
+</header>
+
+<main>
+  <section class="stats">
+    <div class="stat">
+      <strong id="total">0</strong>
+      <span>Devoirs au total</span>
+    </div>
+    <div class="stat">
+      <strong id="finished">0</strong>
+      <span>Terminés</span>
+    </div>
+    <div class="stat">
+      <strong id="percentage">0%</strong>
+      <span>Progression</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>🎯 Ma progression</h2>
+    <div class="progress-bg">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <p class="muted" id="progressText">Ajoute ton premier devoir pour commencer !</p>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>📝 Ajouter un devoir</h2>
+      <form id="taskForm" class="form">
+        <input id="taskName" placeholder="Ex. : Réviser les équations" required maxlength="120">
+        <select id="subject">
+          <option>Mathématiques</option>
+          <option>Français</option>
+          <option>Histoire-Géo</option>
+          <option>Anglais</option>
+          <option>Physique-Chimie</option>
+          <option>SVT</option>
+          <option>Technologie</option>
+          <option>Autre</option>
+        </select>
+        <select id="priority">
+          <option value="Haute">🔴 Priorité haute</option>
+          <option value="Moyenne" selected>🟠 Priorité moyenne</option>
+          <option value="Basse">🟢 Priorité basse</option>
+        </select>
+        <label for="dueDate" class="muted">Date limite (facultatif)</label>
+        <input type="date" id="dueDate">
+        <button type="submit">+ Ajouter le devoir</button>
+      </form>
+    </section>
+
+    <section class="card timer">
+      <h2>⏱️ Minuteur de révision</h2>
+      <p class="muted">Concentre-toi sur une tâche à la fois.</p>
+      <div class="clock" id="clock">25:00</div>
+      <div class="timer-buttons">
+        <button type="button" id="startTimer">Démarrer</button>
+        <button type="button" id="pauseTimer" class="secondary">Pause</button>
+        <button type="button" id="resetTimer" class="secondary">Réinitialiser</button>
+      </div>
+      <div class="timer-buttons" style="margin-top:14px">
+        <button type="button" class="secondary" data-minutes="25">25 min</button>
+        <button type="button" class="secondary" data-minutes="5">5 min</button>
+          <button type="button" class="secondary" data-minutes="45">45 min</button>
+      </div>
+      <p class="muted" id="timerMessage" aria-live="polite">Prêt à commencer ?</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>📋 Mes devoirs</h2>
+    <select id="filter" aria-label="Filtrer les devoirs">
+      <option value="all">Tous les devoirs</option>
+      <option value="todo">À faire</option>
+      <option value="done">Terminés</option>
+    </select>
+    <div id="taskList">
+      <p class="empty">Aucun devoir pour le moment.</p>
+    </div>
+  </section>
+</main>
+
+<footer>CapRévisions · Ton organisation, ton rythme.</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = "caprevisions-tasks-v1";
+
+let tasks = [];
+try {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  tasks = saved ? JSON.parse(saved) : [];
+  if (!Array.isArray(tasks)) tasks = [];
+} catch (error) {
+  tasks = [];
+}
+
+function saveTasks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  } catch (error) {
+    alert("Impossible de sauvegarder les données sur cet appareil.");
+  }
+}
+
+function render() {
+  const total = tasks.length;
+  const finished = tasks.filter(task => task.done).length;
+  const percent = total ? Math.round(finished / total * 100) : 0;
+
+  $("total").textContent = total;
+  $("finished").textContent = finished;
+  $("percentage").textContent = percent + "%";
+  $("progressBar").style.width = percent + "%";
+  $("progressText").textContent = total
+    ? finished + " devoir(s) terminé(s) sur " + total + "."
+    : "Ajoute ton premier devoir pour commencer !";
+
+  const filter = $("filter").value;
+  const visibleTasks = tasks.filter(task => {
+    if (filter === "todo") return !task.done;
+    if (filter === "done") return task.done;
+    return true;
+  });
+
+  const list = $("taskList");
+  list.replaceChildren();
+
+  if (!visibleTasks.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty";
+    empty.textContent = total ? "Aucun devoir dans cette catégorie." : "Aucun devoir pour le moment.";
+    list.appendChild(empty);
+    return;
+  }
+
+  const rank = { Haute: 0, Moyenne: 1, Basse: 2 };
+  visibleTasks.sort((a, b) =>
+    Number(a.done) - Number(b.done) ||
+    rank[a.priority] - rank[b.priority]
+  );
+
+  visibleTasks.forEach(task => {
+    const card = document.createElement("div");
+    card.className = "task" + (task.done ? " done" : "");
+
+    const top = document.createElement("div");
+    top.className = "task-top";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.done;
+    checkbox.setAttribute("aria-label", "Marquer comme terminé");
+    checkbox.addEventListener("change", () => {
+      task.done = checkbox.checked;
+      saveTasks();
+      render();
+    });
+
+    const details = document.createElement("div");
+    details.className = "task-name";
+
+    const name = document.createElement("strong");
+    name.textContent = task.name;
+    details.appendChild(name);
+
+    const meta = document.createElement("div");
+    meta.className = "task-meta";
+    meta.textContent = task.subject +
+      (task.dueDate ? " · À rendre le " + task.dueDate.split("-").reverse().join("/") : "");
+    details.appendChild(meta);
+
+    const priority = document.createElement("div");
+    priority.className = "priority";
+    priority.textContent = ({
+      Haute: "🔴 Priorité haute",
+      Moyenne: "🟠 Priorité moyenne",
+      Basse: "🟢 Priorité basse"
+    })[task.priority] || "Priorité moyenne";
+    details.appendChild(priority);
+
+    const remove = document.createElement("button");
+    remove.className = "delete";
+    remove.type = "button";
+    remove.textContent = "Supprimer";
+    remove.addEventListener("click", () => {
+      if (confirm("Supprimer ce devoir ?")) {
+        tasks = tasks.filter(item => item.id !== task.id);
+        saveTasks();
+        render();
+      }
+    });
+
+    top.append(checkbox, details, remove);
+    card.appendChild(top);
+    list.appendChild(card);
+  });
+}
+
+$("taskForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  tasks.push({
+    id: Date.now().toString() + Math.random().toString(36).slice(2),
+    name: $("taskName").value.trim(),
+    subject: $("subject").value,
+    priority: $("priority").value,
+    dueDate: $("dueDate").value,
+    done: false
+  });
+
+  saveTasks();
+  $("taskForm").reset();
+  $("priority").value = "Moyenne";
+  render();
+  $("taskName").focus();
+});
+
+$("filter").addEventListener("change", render);
+
+// Minuteur
+let duration = 25 * 60;
+let remaining = duration;
+let timerInterval = null;
+
+function displayClock() {
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
+  $("clock").textContent =
+    String(minutes).padStart(2, "0") + ":" +
+    String(seconds).padStart(2, "0");
+}
+
+function stopTimer() {
+  if (timerInterval !== null) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+$("startTimer").addEventListener("click", () => {
+  if (timerInterval !== null) return;
+  if (remaining <= 0) remaining = duration;
+
+  $("timerMessage").textContent = "C'est parti ! Reste concentré.";
+  timerInterval = setInterval(() => {
+    remaining--;
+    displayClock();
+
+    if (remaining <= 0) {
+      stopTimer();
+      remaining = 0;
+      displayClock();
+      $("timerMessage").textContent = "Bravo ! Session terminée 🎉";
+      alert("Bravo ! Ta session de révision est terminée.");
+    }
+  }, 1000);
+});
+
+$("pauseTimer").addEventListener("click", () => {
+  stopTimer();
+  $("timerMessage").textContent = "Minuteur en pause.";
+});
+
+$("resetTimer").addEventListener("click", () => {
+  stopTimer();
+  remaining = duration;
+  displayClock();
+  $("timerMessage").textContent = "Minuteur réinitialisé.";
+});
+
+document.querySelectorAll("[data-minutes]").forEach(button => {
+  button.addEventListener("click", () => {
+    stopTimer();
+    duration = Number(button.dataset.minutes) * 60;
+    remaining = duration;
+    displayClock();
+    $("timerMessage").textContent = "Durée réglée sur " +
+      button.dataset.minutes + " minutes.";
+  });
+});
+
+displayClock();
+render();
+</script>
+</body>
+</html>
